@@ -172,12 +172,16 @@ def export_report(
     source: Path | None = None,
     output: Path | None = None,
     include_appendix: bool = False,
+    repo: str | None = None,
 ) -> ReportExportResult:
     """Merge judge, package transcripts, write PDF. Returns paths and status.
 
     Transcripts are always packaged into ``docs/transcripts/`` (+ zip) and listed
     in the report's *Session transcripts* section, but their full text is only
     appended to the PDF when ``include_appendix`` is set (``--with-appendix``).
+
+    ``repo`` is the source-repository URL printed on the cover page; when it is
+    not given, the local ``git remote origin`` URL is used.
     """
     src = source or DEFAULT_REPORT
     dest = output or DEFAULT_PDF
@@ -234,11 +238,12 @@ def export_report(
             "(runs student-judge -> docs/judge.md), then re-run this command."
         )
     app_url, logins, missing = _marker_access(markdown)
+    repo_url = (repo or "").strip() or _git_origin_url()
     dest.parent.mkdir(parents=True, exist_ok=True)
 
     pdf = _new_pdf(bool(missing))
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
-        cover = _cover_html(clean_name, clean_id, app_url, logins, integrity, missing)
+        cover = _cover_html(clean_name, clean_id, app_url, logins, integrity, missing, repo_url)
         body = _markdown_to_html(markdown, src.parent, Path(tmp))
         _write_report_html(pdf, cover + body)
         if include_appendix:
@@ -591,6 +596,7 @@ def _cover_html(
     logins: str,
     integrity: IntegrityResult,
     missing: list[str],
+    repo_url: str = "",
 ) -> str:
     login_html = " · ".join(
         html_lib.escape(line.strip()) for line in logins.splitlines() if line.strip()
@@ -603,6 +609,11 @@ def _cover_html(
         ("Student name", html_lib.escape(name), False),
         ("Student ID", html_lib.escape(student_id), False),
         ("Deployed app", html_lib.escape(app_url), False),
+        (
+            "Source repository",
+            html_lib.escape(repo_url) if repo_url else "Not set",
+            False,
+        ),
         ("Logins", login_html, False),
         ("Skill integrity", integrity_value, not integrity.ok),
     ]
@@ -654,6 +665,33 @@ def _section(markdown: str, *titles: str) -> str:
         if capture:
             lines.append(line)
     return "\n".join(lines).strip()
+
+
+def _git_origin_url() -> str:
+    """Best-effort ``git remote origin`` URL for the cover's repository row.
+
+    Returns an empty string when git or a remote is unavailable, and normalises
+    the SSH form (``git@github.com:owner/repo.git``) to https.
+    """
+    try:
+        proc = subprocess.run(
+            ["git", "remote", "get-url", "origin"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except Exception:  # noqa: BLE001 — cover must never break the export
+        return ""
+    url = (proc.stdout or "").strip()
+    if proc.returncode != 0 or not url:
+        return ""
+    if url.startswith("git@"):
+        url = url.replace("git@", "https://", 1).replace(":", "/", 1)
+    if url.endswith(".git"):
+        url = url[: -len(".git")]
+    return url
 
 
 def _marker_access(markdown: str) -> tuple[str, str, list[str]]:

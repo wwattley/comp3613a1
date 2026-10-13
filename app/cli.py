@@ -337,6 +337,7 @@ def cmd_report(args: argparse.Namespace) -> None:
         source=None if args.src is None else Path(args.src),
         output=None if args.output is None else Path(args.output),
         include_appendix=args.with_appendix,
+        repo=args.repo,
     )
     print()
     print("Report package:")
@@ -484,6 +485,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--with-appendix",
         action="store_true",
         help="Also append the full session transcripts to the PDF (default: leave them out)",
+    )
+    p_report.add_argument(
+        "--repo",
+        default=None,
+        help="Source repository URL printed on the cover (default: git remote origin)",
     )
     p_report.set_defaults(func=cmd_report)
 
