@@ -171,8 +171,14 @@ def export_report(
     student_id: str,
     source: Path | None = None,
     output: Path | None = None,
+    include_appendix: bool = False,
 ) -> ReportExportResult:
-    """Merge judge, dump transcripts, write PDF. Returns paths and status."""
+    """Merge judge, package transcripts, write PDF. Returns paths and status.
+
+    Transcripts are always packaged into ``docs/transcripts/`` (+ zip) and listed
+    in the report's *Session transcripts* section, but their full text is only
+    appended to the PDF when ``include_appendix`` is set (``--with-appendix``).
+    """
     src = source or DEFAULT_REPORT
     dest = output or DEFAULT_PDF
     clean_name = name.strip()
@@ -234,15 +240,16 @@ def export_report(
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         cover = _cover_html(clean_name, clean_id, app_url, logins, integrity, missing)
         body = _markdown_to_html(markdown, src.parent, Path(tmp))
-        appendix = _markdown_to_html(
-            appendix_markdown(transcripts),
-            src.parent,
-            Path(tmp),
-        )
         _write_report_html(pdf, cover + body)
-        if appendix.strip():
-            pdf.add_page()
-            _write_report_html(pdf, appendix)
+        if include_appendix:
+            appendix = _markdown_to_html(
+                appendix_markdown(transcripts),
+                src.parent,
+                Path(tmp),
+            )
+            if appendix.strip():
+                pdf.add_page()
+                _write_report_html(pdf, appendix)
     pdf.output(dest)
     print(f"  [3/3] PDF: {dest.as_posix()}")
     if missing:
