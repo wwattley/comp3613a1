@@ -1,21 +1,19 @@
-from fastapi import APIRouter, HTTPException, Depends, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import Request
+from fastapi.responses import RedirectResponse
 from fastapi import status
-from app.dependencies.session import SessionDep
-from app.dependencies.auth import AuthDep, IsUserLoggedIn, get_current_user, is_admin
-from . import router, templates
+
+from app.dependencies.auth import AuthDep
+from . import router
 
 
-@router.get("/app", response_class=HTMLResponse)
+@router.get("/app", response_class=RedirectResponse)
 async def user_home_view(
     request: Request,
     user: AuthDep,
-    db:SessionDep
 ):
-    return templates.TemplateResponse(
-        request=request, 
-        name="app.html",
-        context={
-            "user": user
-        }
+    """Student home lands on Explore — the wireframe's front door
+    (workflow1.png: browse/search is where a student starts)."""
+    return RedirectResponse(
+        url=request.url_for("explore_view"),
+        status_code=status.HTTP_303_SEE_OTHER,
     )

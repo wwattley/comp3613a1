@@ -1,0 +1,56 @@
+{% extends "authenticated-base.html" %}
+{% block title %}History · UniHomes{% endblock %}
+
+{% block subpage_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h4 mb-0">Approval History</h1>
+        <p class="text-muted mb-0">Past host-account decisions — read only.</p>
+    </div>
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin_home_view') }}">
+        <span class="material-symbols-outlined align-middle me-1">arrow_back</span>
+        Dashboard
+    </a>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Uni</th>
+                    <th>Phone</th>
+                    <th>Status</th>
+                    <th>Applied</th>
+                    <th>Decided</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for applicant in decided %}
+                <tr>
+                    <td>{{ applicant.username }}</td>
+                    <td>{{ applicant.university or "—" }}</td>
+                    <td>{{ applicant.phone or "—" }}</td>
+                    <td>
+                        {% if applicant.status.value == "active" %}
+                        <span class="badge text-bg-success">Approved</span>
+                        {% else %}
+                        <span class="badge text-bg-danger">Rejected</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ applicant.applied_at.strftime('%d %b %Y') if applicant.applied_at else "—" }}</td>
+                    <td>
+                        {{ (applicant.approved_at or applicant.rejected_at).strftime('%d %b %Y') }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-muted">No decisions recorded yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

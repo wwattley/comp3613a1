@@ -1,0 +1,111 @@
+{% extends "authenticated-base.html" %}
+{% block title %}Explore · UniHomes{% endblock %}
+
+{# Filters sit in a row below the bar. The row mirrors the nav's flex centre, and the two
+   fields are equal width, so the Capacity/Location seam lands exactly under Explore. #}
+{% block topbar_filters %}
+<div class="topbar-filterbar">
+    <div class="topbar-filterbar-spacer"></div>
+
+    <form method="GET" action="{{ url_for('explore_view') }}" class="topbar-filters">
+        <div class="topbar-filter-field">
+            <label class="topbar-filter-label" for="capacity">Capacity</label>
+            <select class="form-select topbar-filter-select" id="capacity" name="capacity">
+                <option value="">Any</option>
+                {% for n in range(1, 5) %}
+                <option value="{{ n }}" {{ 'selected' if capacity == n else '' }}>{{ n }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="topbar-filter-field">
+            <label class="topbar-filter-label" for="location">Location</label>
+            <select class="form-select topbar-filter-select" id="location" name="location">
+                <option value="">Any</option>
+                {% for loc in locations %}
+                <option value="{{ loc }}" {{ 'selected' if location == loc else '' }}>{{ loc }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {# Buttons float clear of the two equal fields so they don't shift the seam #}
+        <div class="topbar-filter-actions">
+            <button class="btn btn-primary topbar-filter-btn" type="submit" aria-label="Search">
+                <span class="material-symbols-outlined align-middle">search</span>
+            </button>
+
+            {% if location or capacity %}
+            <a class="topbar-filter-btn topbar-filter-clear" href="{{ url_for('explore_view') }}" title="Clear filters" aria-label="Clear filters">
+                <span class="material-symbols-outlined align-middle">close</span>
+            </a>
+            {% endif %}
+        </div>
+    </form>
+
+    <div class="topbar-filterbar-spacer"></div>
+</div>
+{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid py-2">
+
+  {% if not sections %}
+  <p class="text-muted">No units match your search yet. Try widening the filters.</p>
+  {% endif %}
+
+  {% for loc, rows in sections %}
+  <section class="mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <h2 class="h5 mb-0">Units in {{ loc }}</h2>
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-muted small">{{ rows|length }} listing{{ 's' if rows|length != 1 }}</span>
+        {% if rows|length > 4 %}
+        <div class="btn-group" role="group" aria-label="Slide listings">
+          <button type="button" class="btn btn-sm btn-outline-secondary rounded-start-3"
+                  data-bs-target="#units-{{ loop.index }}" data-bs-slide="prev">
+            <span class="material-symbols-outlined align-middle">chevron_left</span>
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary rounded-end-3"
+                  data-bs-target="#units-{{ loop.index }}" data-bs-slide="next">
+            <span class="material-symbols-outlined align-middle">chevron_right</span>
+          </button>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Card slider: one slide per row of up to 4 cards (wireframe: < > per location) -->
+    <div id="units-{{ loop.index }}" class="carousel slide" data-bs-interval="false">
+      <div class="carousel-inner">
+        {% for slide in rows|batch(4) %}
+        <div class="carousel-item {{ 'active' if loop.first }}">
+          <div class="listing-slide">
+            {% for listing in slide %}
+              <a href="{{ url_for('listing_details_view', listing_id=listing.listing_id) }}"
+                 class="text-decoration-none text-dark">
+              <div class="card shadow-sm listing-card">
+                {% if listing.images %}
+                <img src="{{ listing.images[0].image_url }}" class="card-img-top" alt="{{ listing.title }}">
+                {% else %}
+                <div class="listing-card-placeholder d-flex align-items-center justify-content-center">
+                  <span class="material-symbols-outlined" style="font-size:2.5rem;">home</span>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                  <h3 class="h6 mb-1">{{ listing.title }}</h3>
+                  <p class="text-muted small mb-2">{{ listing.location }}</p>
+                  <p class="fw-bold mb-0">${{ listing.monthly_rent }} <span class="fw-normal text-muted small">/ Month</span></p>
+                </div>
+              </div>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endfor %}
+
+</div>
+{% endblock %}

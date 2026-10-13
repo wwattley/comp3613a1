@@ -1,9 +1,70 @@
 {% extends "authenticated-base.html" %}
-{% block title %}Admin{% endblock %}
+{% block title %}Admin · UniHomes{% endblock %}
 
 {% block subpage_content %}
-<div class="container-fluid py-2">
-  <h1 class="h4 mb-2">Admin</h1>
-  <p class="text-muted mb-0">Admin workflow screens replace this shell in Phase 5 implement.</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h4 mb-0">Hello,<br>{{ user.username }}</h1>
+    </div>
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin_history_view') }}">
+        <span class="material-symbols-outlined align-middle me-1">history</span>
+        History
+    </a>
 </div>
+
+<h2 class="h5 mb-3">Pending Host Account Approvals</h2>
+
+{% for applicant in applicants %}
+<div class="card approval-card mb-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <strong>Name: {{ applicant.username }}</strong>
+            <span class="badge text-bg-warning">Status: Pending</span>
+        </div>
+        <div class="d-flex gap-3 mb-3">
+            {% if applicant.face_data %}
+            <img src="{{ url_for('admin_face_view', user_id=applicant.user_id) }}"
+                 alt="Face photo of {{ applicant.username }}"
+                 class="rounded border" style="width: 96px; height: 96px; object-fit: cover;"
+                 hx-boost="false">
+            {% else %}
+            <div class="border rounded d-flex align-items-center justify-content-center text-muted"
+                 style="width: 96px; height: 96px;">
+                <span class="material-symbols-outlined">person</span>
+            </div>
+            {% endif %}
+            <div class="d-flex flex-column justify-content-center gap-1">
+                <div>Uni: {{ applicant.university or "Not provided" }}</div>
+                <div>Phone: {{ applicant.phone or "Not provided" }}</div>
+                <div>
+                    {% if applicant.credentials_data %}
+                    <a href="{{ url_for('admin_credentials_view', user_id=applicant.user_id) }}"
+                       target="_blank" rel="noopener" hx-boost="false">
+                        <span class="material-symbols-outlined align-middle me-1">description</span>
+                        Link to credentials
+                    </a>
+                    {% else %}
+                    <span class="text-muted">No credentials on file</span>
+                    {% endif %}
+                </div>
+                <small class="text-muted">Applied {{ applicant.applied_at.strftime('%d %b %Y') if applicant.applied_at else "—" }}</small>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <form method="post" action="{{ url_for('approve_host_view', user_id=applicant.user_id) }}"
+                  class="d-inline">
+                <button class="btn btn-primary btn-sm" type="submit">approve</button>
+            </form>
+            <form method="post" action="{{ url_for('reject_host_view', user_id=applicant.user_id) }}"
+                  class="d-inline">
+                <button class="btn btn-outline-danger btn-sm" type="submit">reject</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-light border" role="alert">
+    No pending host applications — you're all caught up.
+</div>
+{% endfor %}
 {% endblock %}

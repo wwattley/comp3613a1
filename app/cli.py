@@ -61,15 +61,17 @@ def cmd_seed(args: argparse.Namespace) -> None:
     ensure_db_and_tables()
 
     demo_users = [
-        ("bob", "bob@example.com", "bobpass", "regular_user"),
-        ("admin", "admin@example.com", "adminpass", "admin"),
+        ("bob", "bob@example.com", "bobpass", "+1 868 555 0101", "regular_user", "The University of the West Indies"),
+        ("admin", "admin@example.com", "adminpass", "+1 868 555 0102", "admin", "N/A"),
+        ("host", "host@example.com", "hostpass", "+1 868 555 0103", "host", "N/A"),
+        ("dana", "dana@example.com", "danapass", "+1 868 555 0105", "regular_user", "The University of the West Indies"),
     ]
 
     created = 0
     skipped = 0
     with get_cli_session() as session:
         repo = UserRepository(session)
-        for username, email, password, role in demo_users:
+        for username, email, password, phone, role, university in demo_users:
             if repo.get_by_username(username):
                 print(f"  skip  {username} (already exists)")
                 skipped += 1
@@ -80,14 +82,222 @@ def cmd_seed(args: argparse.Namespace) -> None:
                     username=username,
                     email=email,
                     password=encrypt_password(password),
+                    phone=phone,
                     role=role,
+                    university=university,
                 )
             )
             print(f"  create {username} ({role})")
             created += 1
 
     print(f"Seed done — created {created}, skipped {skipped}.")
-    print("Login with bob/bobpass or admin/adminpass")
+
+    # Demo listings for Explore (owned by the seeded host).
+    from decimal import Decimal
+
+    from sqlmodel import select
+
+    from app.models.listing import Listing
+    from app.models.listing_image import ListingImage
+
+    # Each demo listing gets its own set of free-to-use stock photos (Unsplash License).
+    # Files live in app/static/img/listings/ so they serve locally in dev and on Render.
+    demo_listings = [
+        ("Sunlit Room near UWI", "St. Augustine", 1, 1800, 5, "Bright single room, 5 min walk to campus.", "sunlit-room"),
+        ("Shared Flat on Eastern Rd", "St. Augustine", 2, 1450, 12, "Two-bed flat share with wifi and parking.", "shared-flat"),
+        ("Quiet Studio, Mount Hope", "Mount Hope", 1, 2100, 6, "Self-contained studio next to the medical campus.", "quiet-studio"),
+        ("Garden Cottage, St. Aug.", "St. Augustine", 3, 3200, 12, "Private cottage with garden and kitchen.", "garden-cottage"),
+    ]
+    photos_per_listing = 3
+
+    def listing_photo_urls(slug: str) -> list[str]:
+        return [
+            f"/static/img/listings/{slug}-{i}.jpg"
+            for i in range(1, photos_per_listing + 1)
+        ]
+
+    with get_cli_session() as session:
+        host_user = UserRepository(session).get_by_username("host")
+        existing = session.exec(select(Listing)).all()
+        if host_user and not existing:
+            for title, loc, cap, rent, months, desc, slug in demo_listings:
+                listing = Listing(
+                    host_id=host_user.user_id,
+                    title=title,
+                    location=loc,
+                    capacity=cap,
+                    monthly_rent=Decimal(rent),
+                    duration_months=months,
+                    description=desc,
+                )
+                session.add(listing)
+                session.flush()  # get listing_id for the images
+                for i, url in enumerate(listing_photo_urls(slug)):
+                    session.add(
+                        ListingImage(
+                            listing_id=listing.listing_id,
+                            image_url=url,
+                            caption=f"{title} — photo {i + 1}",
+                        )
+                    )
+            session.commit()
+            print(f"  created {len(demo_listings)} demo listings (host) with photos")
+
+    # A pending reservation for the host to approve (workflow2 demo data).
+    from app.models.reservation import Reservation, ReservationStatus
+
+    with get_cli_session() as session:
+        student = UserRepository(session).get_by_username("bob")
+        listing = session.exec(select(Listing).order_by(Listing.listing_id)).first()
+        has_reservation = session.exec(select(Reservation)).first()
+        if student and listing and not has_reservation:
+            # Minimal 1x1 PNG so the proof link opens a real file.
+            png = (
+                b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01"
+                b"\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89"
+                b"\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01"
+                b"\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+            )
+            session.add(
+                Reservation(
+                    user_id=student.user_id,
+                    listing_id=listing.listing_id,
+                    proof_filename="proof-of-enrollment.png",
+                    proof_content_type="image/png",
+                    proof_data=png,
+                )
+            )
+            session.commit()
+            print(f"  created 1 pending reservation (bob → listing {listing.listing_id})")
+
+    # Reviews demo data (student decision: reviews are seeded, not authored in
+    # the UI — the assignment demo does not need a "write a review" screen).
+    #
+    # Phase 3 rule: only an APPROVED reservation may produce a review, so every
+    # row below hangs off an approved (and accepted) reservation. Dana is a
+    # second student so bob's own path stays clean — he can still walk listing 1
+    # from pending → approved → accepted, and reserve fresh on 2, 3 and 4.
+    #
+    # Capacities are respected so no listing reads as full for the demo:
+    #   listing 1 cap 1 — bob's live pending reservation (untouched)
+    #   listing 2 cap 2 — dana holds 1, 1 slot left for bob
+    #   listing 3 cap 1 — untouched, bob can reserve it
+    #   listing 4 cap 3 — dana holds 1, 2 slots left for bob
+    from app.models.review import Review
+    from datetime import datetime as _dt
+
+    demo_reviews = {
+        "shared-flat": [
+            ("Great location, five minutes from the library. The wifi never dropped once.",
+             "2026-09-14"),
+            ("Cooked for myself the whole stay — the kitchen is bigger than it looks in the photos.",
+             "2026-09-20"),
+        ],
+        "garden-cottage": [
+            ("Quietest place I have stayed near campus. The garden is a proper retreat during exams.",
+             "2026-08-02"),
+            ("Host sorted the meter and the internet within a day of me asking. No complaints.",
+             "2026-08-11"),
+        ],
+    }
+
+    with get_cli_session() as session:
+        dana = UserRepository(session).get_by_username("dana")
+        by_title = {listing.title: listing for listing in session.exec(select(Listing)).all()}
+        # demo_listings rows are (title, location, capacity, rent, months, description, slug)
+        by_slug = {slug: by_title.get(title) for title, _, _, _, _, _, slug in demo_listings}
+        existing_reviews = session.exec(select(Review)).first()
+        if dana and not existing_reviews:
+            # Minimal 1x1 PNG so Dana's proof link opens a real file. Defined
+            # here rather than reused: the block above only binds its copy when
+            # bob's reservation is actually created.
+            proof_png = (
+                b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01"
+                b"\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89"
+                b"\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01"
+                b"\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+            )
+            created = 0
+            for slug, entries in demo_reviews.items():
+                listing = by_slug.get(slug)
+                if listing is None:
+                    continue
+                # One reservation per (student, listing) — approved and accepted,
+                # which is what makes a review legal under the Phase 3 rule.
+                reservation = Reservation(
+                    user_id=dana.user_id,
+                    listing_id=listing.listing_id,
+                    proof_filename="proof-of-enrollment.png",
+                    proof_content_type="image/png",
+                    proof_data=proof_png,
+                    status=ReservationStatus.APPROVED,
+                    confirmed_at=_dt(2026, 8, 1, 10, 0),
+                )
+                session.add(reservation)
+                session.flush()
+                for comment, day in entries:
+                    session.add(
+                        Review(
+                            reservation_id=reservation.reservation_id,
+                            comment=comment,
+                            created_at=_dt.fromisoformat(f"{day}T12:00"),
+                        )
+                    )
+                    created += 1
+            session.commit()
+            print(f"  created {created} seeded reviews (dana, approved stays)")
+
+    # A pending host applicant for the admin to approve (workflow3 demo data).
+    from datetime import datetime
+
+    from app.models.user import HOST_ACCOUNT_STATUS
+    from app.schemas.user import HostCreate
+
+    with get_cli_session() as session:
+        repo = UserRepository(session)
+        if not repo.get_by_username("cara"):
+            # Cara's face photo is a real local JPEG (Unsplash License), served
+            # to the admin from the DB blob via /admin/applicants/{id}/face —
+            # the same local-file approach as the listing photos, so it works
+            # offline and on Render. Falls back to a 1x1 PNG if the asset is
+            # ever missing, so the seed never hard-crashes.
+            from pathlib import Path
+
+            face_path = Path(__file__).resolve().parent / "static" / "img" / "faces" / "cara.jpg"
+            face_bytes = face_path.read_bytes() if face_path.is_file() else (
+                b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01"
+                b"\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89"
+                b"\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01"
+                b"\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+            )
+            face_is_jpeg = face_path.is_file()
+            # A tiny PDF so the admin card's credentials link opens a real file.
+            pdf = (
+                b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n"
+                b"2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n"
+                b"3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]>>endobj\n"
+                b"trailer<</Root 1 0 R>>\n%%EOF"
+            )
+            repo.create(
+                HostCreate(
+                    username="cara",
+                    email="cara@example.com",
+                    password=encrypt_password("carapass"),
+                    role="host",
+                    phone="+1 868 555 0104",
+                    university="The University of the West Indies",
+                    status=HOST_ACCOUNT_STATUS.PENDING,
+                    applied_at=datetime.today(),
+                    face_filename="cara.jpg" if face_is_jpeg else "cara-face.png",
+                    face_content_type="image/jpeg" if face_is_jpeg else "image/png",
+                    face_data=face_bytes,
+                    credentials_filename="cara-credentials.pdf",
+                    credentials_content_type="application/pdf",
+                    credentials_data=pdf,
+                )
+            )
+            print("  create cara (pending host applicant — approve her as admin)")
+    print("Login with bob/bobpass, host/hostpass or admin/adminpass")
 
 
 def cmd_run(args: argparse.Namespace) -> None:
@@ -207,7 +417,7 @@ def cmd_users(args: argparse.Namespace) -> None:
             return
         for user in users:
             print(
-                f"  id={user.id}  username={user.username}  "
+                f"  id={user.user_id}  username={user.username}  "
                 f"role={user.role}  email={user.email}"
             )
 

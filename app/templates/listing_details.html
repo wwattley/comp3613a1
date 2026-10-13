@@ -1,0 +1,155 @@
+{% extends "authenticated-base.html" %}
+{% block title %}{{ details.listing.title }} · UniHomes{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid py-2">
+  <a class="auth-back" href="{{ url_for('explore_view') }}">← Back to Explore</a>
+
+  <!-- Image slideshow (workflow1.png) -->
+  <div id="listingSlideshow" class="carousel slide rounded-3 overflow shadow-sm detail-slideshow mb-3"
+       style="--bs-body-bg: color-mix(in srgb, var(--brand-accent) 10%, #fff);">
+    <div class="carousel-inner">
+      {% if details.images %}
+      {% for image in details.images %}
+      <div class="carousel-item {{ 'active' if loop.first }}">
+        <img src="{{ image.image_url }}" class="d-block w-100" alt="{{ image.caption or details.listing.title }}">
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="carousel-item active d-flex align-items-center justify-content-center detail-slideshow-placeholder">
+        <span class="material-symbols-outlined" style="font-size: 4rem;">home</span>
+      </div>
+      {% endif %}
+    </div>
+    {% if details.images|length > 1 %}
+    <button class="carousel-control-prev" type="button" data-bs-target="#listingSlideshow" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#listingSlideshow" data-bs-slide="next">
+      <span class="carousel-control-next-icon"></span>
+    </button>
+    {% endif %}
+  </div>
+
+  <!-- One section, two tabs: Listing details | Host information -->
+  <div class="bg-white rounded-3 shadow-sm detail-tabs">
+    <ul class="nav nav-tabs detail-tabs-nav" id="listingTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="details-tab" data-bs-toggle="tab"
+                data-bs-target="#details-pane" type="button" role="tab"
+                aria-controls="details-pane" aria-selected="true">Listing details</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="host-tab" data-bs-toggle="tab"
+                data-bs-target="#host-pane" type="button" role="tab"
+                aria-controls="host-pane" aria-selected="false">Host information</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="reviews-tab" data-bs-toggle="tab"
+                data-bs-target="#reviews-pane" type="button" role="tab"
+                aria-controls="reviews-pane" aria-selected="false">
+          Reviews{% if details.review_count %} <span class="review-count">{{ details.review_count }}</span>{% endif %}
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content p-3 p-md-4">
+      <!-- Listing details -->
+      <div class="tab-pane fade show active" id="details-pane" role="tabpanel" aria-labelledby="details-tab" tabindex="0">
+        <h1 class="h4 mb-1">{{ details.listing.title }}</h1>
+        <p class="text-muted mb-3">{{ details.listing.location }} · sleeps {{ details.listing.capacity }}</p>
+
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+          <p class="h4 mb-0">${{ details.monthly_rent }} <span class="fw-normal text-muted h6">/ Month</span></p>
+
+          {% if details.viewer_reservation %}
+          <!-- Reserved state (workflow1.png, bottom-right): label follows the
+               reservation's real status — pending until the host acts, then
+               Reserved — Approved with an Accept action, then Confirmed.
+               Accepting sets confirmed_at, which locks the reservation and
+               removes the Cancel action. -->
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge {{ details.reservation_tone }} px-3 py-2">{{ details.reservation_label }}</span>
+            {% if details.can_accept_reservation %}
+            <form method="POST" action="{{ url_for('reservation_confirm_view', reservation_id=details.viewer_reservation.reservation_id) }}">
+              <button class="btn btn-primary" type="submit">Accept</button>
+            </form>
+            {% endif %}
+            {% if details.can_cancel_reservation %}
+            <form method="POST" action="{{ url_for('reservation_cancel_view', reservation_id=details.viewer_reservation.reservation_id) }}">
+              <button class="btn btn-outline-secondary" type="submit">Cancel?</button>
+            </form>
+            {% endif %}
+          </div>
+          {% elif not details.can_reserve %}
+          <!-- Hosts view details only (workflow2 role split) -->
+          <span class="badge text-bg-light border px-3 py-2 text-muted">Viewing only — hosts don't reserve</span>
+          {% elif details.is_full %}
+          <span class="badge text-bg-secondary px-3 py-2">Fully booked</span>
+          {% else %}
+          <a class="btn btn-primary" href="{{ url_for('reservation_form_view', listing_id=details.listing.listing_id) }}">Reserve</a>
+          {% endif %}
+        </div>
+
+        {% if details.slots_taken %}
+        <p class="text-muted small mb-3">
+          {{ details.slots_taken }} of {{ details.capacity }} slot(s) currently held.
+        </p>
+        {% endif %}
+
+        <p class="mb-2">{{ details.listing.description }}</p>
+        <p class="text-muted small mb-0">
+          Cancellations are free until approval; once approved, accept to lock the
+          reservation in — after accepting it can no longer be cancelled here.
+          Stays run {{ details.listing.duration_months }} month(s).
+        </p>
+      </div>
+
+      <!-- Host information -->
+      <div class="tab-pane fade" id="host-pane" role="tabpanel" aria-labelledby="host-tab" tabindex="0">
+        {% if details.host %}
+        <h2 class="h5 mb-2">{{ details.host.username }}</h2>
+        <p class="text-muted small mb-1">Email</p>
+        <p class="mb-3">{{ details.host.email }}</p>
+        <p class="text-muted small mb-0">
+          This host manages the listing on UniHomes. Reach out by email to arrange a
+          viewing before reserving.
+        </p>
+        {% else %}
+        <p class="text-muted small mb-0">Host details unavailable.</p>
+        {% endif %}
+      </div>
+
+      <!-- Reviews (seeded — see the Phase 5 review notes) -->
+      <div class="tab-pane fade" id="reviews-pane" role="tabpanel" aria-labelledby="reviews-tab" tabindex="0">
+        {% if details.reviews %}
+        <div class="review-list">
+          {% for review in details.reviews %}
+          <article class="review">
+            <div class="review-head">
+              <span class="review-avatar" aria-hidden="true">{{ review.author[:1]|upper }}</span>
+              <div class="review-meta">
+                <p class="review-author">{{ review.author }}</p>
+                <time class="review-date" datetime="{{ review.created_at.isoformat() }}">
+                  {{ review.created_at.strftime('%d %b %Y') }}
+                </time>
+              </div>
+            </div>
+            {% if review.comment %}
+            <p class="review-body">{{ review.comment }}</p>
+            {% endif %}
+          </article>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="review-empty">
+          <span class="material-symbols-outlined">reviews</span>
+          <p>No reviews yet for this listing.</p>
+          <p class="small">Reviews come from students whose reservation the host approved.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

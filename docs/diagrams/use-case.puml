@@ -1,0 +1,47 @@
+@startuml
+!pragma layout smetana
+skinparam shadowing false
+skinparam actorBorderColor #1B365D
+skinparam actorFontColor #1E232D
+skinparam usecaseBackgroundColor #FFFFFF
+skinparam usecaseBorderColor #1B365D
+skinparam usecaseFontColor #1E232D
+skinparam rectangleBorderColor #1B365D
+skinparam rectangleBackgroundColor #F8FAFC
+skinparam arrowColor #1B365D
+
+actor "Student" as Student
+
+rectangle "Student Accommodation" {
+  usecase "Login" as Login
+  usecase "Register" as Register
+  usecase "Browse/Search Listings" as Browse_Search_Listings
+  usecase "View Listing Details" as View_Listing_Details
+  usecase "Reserve Listing" as Reserve_Listing
+  usecase "Check Availability" as Check_Availability
+  usecase "Approve/Reject Reservation" as Approve_Reject_Reservation
+  usecase "Notify Student" as Notify_Student
+  usecase "Approve/Reject Host Accounts" as Approve_Reject_Host_Accounts
+  usecase "Notify Host" as Notify_Host
+}
+
+actor "Host" as Host
+actor "Admin" as Admin
+
+Student --> Login
+Login <-- Host
+Login <-- Admin
+Student --> Register
+Register <-- Host
+Student --> Browse_Search_Listings
+Browse_Search_Listings ..> View_Listing_Details : <<include>>
+Student --> View_Listing_Details
+View_Listing_Details <-- Host
+Student --> Reserve_Listing
+Reserve_Listing ..> Check_Availability : <<include>>
+Approve_Reject_Reservation <-- Host
+Approve_Reject_Reservation ..> Notify_Student : <<include>>
+Approve_Reject_Host_Accounts <-- Admin
+Approve_Reject_Host_Accounts ..> Notify_Host : <<include>>
+
+@enduml

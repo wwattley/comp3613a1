@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException, status, Request
 import jwt
 from jwt.exceptions import InvalidTokenError
 from app.config import get_settings
-from app.models.user import User
+from app.models.user import HOST_ACCOUNT_STATUS, User
 from app.dependencies.session import SessionDep
 from app.repositories.user import UserRepository
 
@@ -53,3 +53,17 @@ async def is_admin_dep(user: AuthDep):
     return user
 
 AdminDep = Annotated[User, Depends(is_admin_dep)]
+
+async def is_host(user: User):
+    # Only approved host accounts get host pages (workflow3 login gate defence-in-depth).
+    return user.role == "host" and user.status == HOST_ACCOUNT_STATUS.ACTIVE
+
+async def is_host_dep(user: AuthDep):
+    if not await is_host(user):
+        raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You are not authorized to access this page",
+            )
+    return user
+
+HostDep = Annotated[User, Depends(is_host_dep)]

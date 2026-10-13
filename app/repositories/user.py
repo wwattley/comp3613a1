@@ -1,5 +1,5 @@
 from sqlmodel import Session, select, func
-from app.models.user import UserBase, User
+from app.models.user import HOST_ACCOUNT_STATUS, UserBase, User
 from typing import Optional, Tuple
 from app.utilities.pagination import Pagination
 from app.schemas.user import UserUpdate
@@ -46,6 +46,38 @@ class UserRepository:
 
     def get_all_users(self) -> list[User]:
         return self.db.exec(select(User)).all()
+
+    def save(self, user: User) -> User:
+        """Persist an already-loaded User (e.g. an admin's status decision)."""
+        try:
+            self.db.add(user)
+            self.db.commit()
+            self.db.refresh(user)
+            return user
+        except Exception as e:
+            logger.error(f"An error occurred while saving user: {e}")
+            self.db.rollback()
+            raise
+
+    def pending_hosts(self) -> list[User]:
+        statement = (
+            select(User)
+            .where(User.role == "host", User.status == HOST_ACCOUNT_STATUS.PENDING)
+            .order_by(User.applied_at.desc())
+        )
+        return list(self.db.exec(statement).all())
+
+    def decided_hosts(self) -> list[User]:
+        """Host applicants an admin has already decided on (History screen)."""
+        statement = (
+            select(User)
+            .where(
+                User.role == "host",
+                (User.approved_at != None) | (User.rejected_at != None),  # noqa: E711, E712
+            )
+            .order_by(func.coalesce(User.approved_at, User.rejected_at).desc())
+        )
+        return list(self.db.exec(statement).all())
 
     def update_user(self, user_id:int, user_data: UserUpdate)->User:
         user = self.db.get(User, user_id)

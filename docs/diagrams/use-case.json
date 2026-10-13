@@ -1,0 +1,51 @@
+{
+  "system": "Student Accommodation",
+  "actors": [
+    { "name": "Student", "side": "left" },
+    { "name": "Host", "side": "right" },
+    { "name": "Admin", "side": "right" }
+  ],
+  "use_cases": [
+    {
+      "name": "Login",
+      "actors": ["Student", "Host", "Admin"]
+    },
+    {
+      "name": "Register",
+      "actors": ["Student", "Host"]
+    },
+    {
+      "name": "Browse/Search Listings",
+      "actors": ["Student"],
+      "includes": ["View Listing Details"]
+    },
+    {
+      "name": "View Listing Details",
+      "actors": ["Student", "Host"]
+    },
+    {
+      "name": "Reserve Listing",
+      "actors": ["Student"],
+      "includes": ["Check Availability"]
+    },
+    {
+      "name": "Check Availability"
+    },
+    {
+      "name": "Approve/Reject Reservation",
+      "actors": ["Host"],
+      "includes": ["Notify Student"]
+    },
+    {
+      "name": "Notify Student"
+    },
+    {
+      "name": "Approve/Reject Host Accounts",
+      "actors": ["Admin"],
+      "includes": ["Notify Host"]
+    },
+    {
+      "name": "Notify Host"
+    }
+  ]
+}

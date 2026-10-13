@@ -1,16 +1,16 @@
 :root {
-  /* Phase 5 theming: Guide overwrites these from docs/report.md preferences */
-  --brand-name: "FastStarter";
-  --brand-bg: #0c1218;
-  --brand-surface: #f7f4ef;
-  --brand-ink: #14202b;
-  --brand-muted: #6a7a88;
-  --brand-accent: #c45c26;
-  --brand-accent-2: #2a6f6b;
-  --brand-sidebar: #14202b;
-  --brand-sidebar-text: #a8b4bf;
-  --brand-font-display: "Fraunces", Georgia, serif;
-  --brand-font-body: "Source Sans 3", "Segoe UI", sans-serif;
+  /* UniHomes — orange / black / white, professional type, warm + welcoming tone */
+  --brand-name: "UniHomes";
+  --brand-bg: #ffffff;
+  --brand-surface: #faf7f2;
+  --brand-ink: #17130f;
+  --brand-muted: #6f6459;
+  --brand-accent: #e2620f;
+  --brand-accent-2: #a83d00;
+  --brand-sidebar: #16130f;
+  --brand-sidebar-text: #d9d2c9;
+  --brand-font-display: "Inter", "Segoe UI", sans-serif;
+  --brand-font-body: "Inter", "Segoe UI", sans-serif;
   --brand-radius: 0.85rem;
 }
 
@@ -33,17 +33,750 @@ body {
   letter-spacing: -0.03em;
 }
 
+/* UniHomes brand overrides for Bootstrap defaults */
+.btn-primary {
+  --bs-btn-bg: var(--brand-accent);
+  --bs-btn-border-color: var(--brand-accent);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--brand-accent) 85%, #000);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--brand-accent) 85%, #000);
+  --bs-btn-active-bg: color-mix(in srgb, var(--brand-accent) 75%, #000);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--brand-accent) 75%, #000);
+  --bs-btn-disabled-bg: color-mix(in srgb, var(--brand-accent) 40%, #fff);
+  --bs-btn-disabled-border-color: color-mix(in srgb, var(--brand-accent) 40%, #fff);
+}
+
+.alert-info {
+  --bs-alert-bg: color-mix(in srgb, var(--brand-accent) 10%, #fff);
+  --bs-alert-border-color: color-mix(in srgb, var(--brand-accent) 30%, #fff);
+  --bs-alert-color: var(--brand-ink);
+}
+
+/* Smooth page transitions (htmx hx-boost): swap target is #page */
+#page {
+  transition: opacity 0.16s ease;
+}
+
+#page.htmx-swapping {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+/* Authenticated shell (always loaded so boosted swaps keep styling) */
+body {
+  overflow-x: hidden;
+  background: #f4f6f8;
+}
+
+/* —— Full-width top nav band (wireframe: wordmark | filters | links) —— */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  background: var(--brand-sidebar);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(23, 19, 15, 0.25);
+}
+
+.topbar-main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  padding: 0.6rem clamp(1rem, 3vw, 2rem);
+}
+
+/* Left + right groups flex equally so the centre links stay truly centred */
+.topbar-left,
+.topbar-user {
+  flex: 1 1 0;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+}
+
+.topbar-brand {
+  color: #fff;
+  font-size: 1.3rem;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.topbar-brand:hover {
+  color: color-mix(in srgb, var(--brand-accent) 70%, #fff);
+}
+
+.topbar-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.topbar-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--brand-sidebar-text);
+  font-weight: 500;
+  font-size: 0.92rem;
+  text-decoration: none;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.5rem;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.topbar-link .material-symbols-outlined {
+  font-size: 1.15rem;
+}
+
+.topbar-link:hover,
+.topbar-link.active {
+  color: #fff;
+  background-color: color-mix(in srgb, var(--brand-accent) 55%, #000);
+}
+
+.topbar-user {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.topbar-welcome {
+  color: var(--brand-sidebar-text);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* Username capitalised, hover colour like the UniHomes wordmark */
+.topbar-welcome-name {
+  text-transform: capitalize;
+  font-weight: 600;
+  color: #fff;
+  transition: color 0.15s ease;
+}
+
+.topbar-welcome-name:hover {
+  color: color-mix(in srgb, var(--brand-accent) 70%, #fff);
+  cursor: default;
+}
+
+.topbar-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #ff9a76;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Underline the word only (the flex gap would split a link-level underline) */
+.topbar-logout-text {
+  text-decoration: none;
+}
+
+.topbar-logout:hover {
+  color: #fff;
+}
+
+.topbar-logout:hover .topbar-logout-text {
+  text-decoration: underline;
+}
+
+/* Filter row below the bar. It mirrors the nav's centre: two flex-1 spacers on either side
+   of an auto-width form, exactly like .topbar-left / .topbar-user flank .topbar-links.
+   Both fields are equal width, so the Capacity/Location seam = the form's centre = Explore. */
+.topbar-filterbar {
+  display: flex;
+  align-items: flex-end;
+  padding: 0 clamp(1rem, 3vw, 2rem) 0.5rem;
+}
+
+.topbar-filterbar-spacer {
+  flex: 1 1 0;
+}
+
+.topbar-filters {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.topbar-filter-field {
+  display: flex;
+  flex-direction: column;
+  width: 7.5rem; /* equal widths keep the seam on the centre line */
+}
+
+.topbar-filter-field .topbar-filter-select {
+  width: 100%;
+}
+
+/* Search + clear sit just outside the two fields, so they don't push the seam off-centre */
+.topbar-filter-actions {
+  position: absolute;
+  left: 100%;
+  bottom: 0;
+  margin-left: 0.5rem;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+
+.topbar-filter-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--brand-sidebar-text);
+  margin-bottom: 0.1rem;
+  text-align: center;
+}
+
+.topbar-filter-select {
+  width: auto;
+  min-width: 7rem;
+  font-size: 0.85rem;
+  padding: 0.25rem 1.75rem 0.25rem 0.6rem;
+  border-radius: 0.5rem;
+}
+
+.topbar-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.05rem;
+  height: 2.05rem;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.topbar-filter-btn .material-symbols-outlined {
+  font-size: 1.15rem;
+}
+
+/* "X" clear button — icon-only, ghosted so it reads secondary to search */
+.topbar-filter-clear {
+  color: var(--brand-sidebar-text);
+  border: 1px solid color-mix(in srgb, var(--brand-sidebar-text) 45%, transparent);
+  text-decoration: none;
+}
+
+.topbar-filter-clear:hover {
+  color: #fff;
+  border-color: #fff;
+  background: transparent;
+}
+
+/* Keep the bell badge readable on the dark band */
+.topbar .nav-bell-btn {
+  color: #fff;
+}
+
+.topbar .nav-bell-btn:hover {
+  color: color-mix(in srgb, var(--brand-accent) 70%, #fff);
+}
+
+#content {
+  width: 100%;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  background-color: #f4f6f8;
+}
+
+.navbar {
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* Explore listing cards (UniHomes theme) */
+/* Slide is a left-packed grid of fixed compact cards — no stretched columns, no gaps */
+.listing-slide {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 11.5rem);
+  gap: 1rem;
+  justify-content: start;
+}
+
+.listing-card {
+  border: none;
+  border-radius: var(--brand-radius);
+  overflow: hidden;
+  height: 100%;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.listing-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(23, 19, 15, 0.14);
+}
+
+.listing-card .card-img-top {
+  width: 100%;
+  aspect-ratio: 1 / 1; /* square image area, tracks the card width */
+  height: auto;
+  object-fit: cover;
+}
+
+.listing-card-placeholder {
+  width: 100%;
+  aspect-ratio: 1 / 1; /* match the image area when a listing has no photo */
+  height: auto;
+  background: color-mix(in srgb, var(--brand-accent) 12%, #fff);
+  color: var(--brand-accent);
+}
+
+.listing-card-placeholder .material-symbols-outlined {
+  font-size: 2.5rem;
+}
+
+.listing-card .card-body {
+  padding: 0.6rem 0.7rem 0.75rem;
+}
+
+/* —— Listing details: tabbed section + slideshow —— */
+.detail-slideshow {
+  --bs-body-bg: color-mix(in srgb, var(--brand-accent) 10%, #fff);
+}
+
+.detail-slideshow .carousel-item img {
+  height: 340px;
+  object-fit: cover;
+}
+
+.detail-slideshow-placeholder {
+  height: 340px;
+  color: var(--brand-accent);
+}
+
+.detail-tabs {
+  overflow: hidden;
+}
+
+.detail-tabs-nav {
+  border-bottom: 1px solid #eee3d8;
+  padding: 0 0.5rem;
+}
+
+.detail-tabs-nav .nav-link {
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--brand-muted);
+  font-weight: 500;
+  padding: 0.85rem 0.9rem;
+  border-radius: 0;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.detail-tabs-nav .nav-link:hover {
+  color: var(--brand-ink);
+  border-bottom-color: color-mix(in srgb, var(--brand-accent) 35%, transparent);
+}
+
+.detail-tabs-nav .nav-link.active {
+  color: var(--brand-accent);
+  background: transparent;
+  border-bottom-color: var(--brand-accent);
+  font-weight: 600;
+}
+
+/* Count pill inside the Reviews tab label */
+.review-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.3rem;
+  height: 1.3rem;
+  padding: 0 0.35rem;
+  margin-left: 0.15rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--brand-accent) 14%, #fff);
+  color: var(--brand-accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* —— Reviews (seeded) —— */
+.review-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.review {
+  padding: 1rem 0;
+  border-bottom: 1px solid #f0e8de;
+}
+
+.review:first-child {
+  padding-top: 0;
+}
+
+.review:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.review-head {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.5rem;
+}
+
+.review-avatar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--brand-accent) 16%, #fff);
+  color: var(--brand-accent-2);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.review-meta {
+  min-width: 0;
+}
+
+.review-author {
+  margin: 0;
+  font-weight: 600;
+  color: var(--brand-ink);
+}
+
+.review-date {
+  display: block;
+  color: var(--brand-muted);
+  font-size: 0.76rem;
+}
+
+.review-body {
+  margin: 0;
+  color: var(--brand-ink);
+  line-height: 1.55;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.review-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 2.25rem 1rem;
+  text-align: center;
+  color: var(--brand-muted);
+}
+
+.review-empty .material-symbols-outlined {
+  font-size: 2.25rem;
+  opacity: 0.5;
+}
+
+.review-empty p {
+  margin: 0;
+}
+
+/* —— Host approvals (workflow2) —— */
+.approval-card {
+  border: none;
+  border-radius: var(--brand-radius);
+  box-shadow: 0 4px 14px rgba(23, 19, 15, 0.08);
+}
+
+/* —— Navbar notification bell + panel —— */
+.nav-bell-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  text-decoration: none;
+  color: var(--brand-ink);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.nav-bell-btn:hover {
+  color: var(--brand-accent);
+  background-color: color-mix(in srgb, var(--brand-accent) 14%, transparent);
+}
+
+/* Soft halo ring behind the bell, as in the reference */
+.nav-bell-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, currentColor 22%, transparent);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.nav-bell-btn[aria-expanded="true"] {
+  color: var(--brand-accent);
+  background-color: color-mix(in srgb, var(--brand-accent) 16%, transparent);
+}
+
+.nav-bell-btn[aria-expanded="true"]::before {
+  border-color: color-mix(in srgb, var(--brand-accent) 55%, transparent);
+}
+
+.nav-bell-btn .material-symbols-outlined {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+/* Count badge floats over the top-right, ringed to read on any band */
+.notif-badge {
+  position: absolute;
+  top: -0.2rem;
+  right: -0.25rem;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  border: 2px solid var(--brand-sidebar);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Click-catcher that closes the panel when you click away */
+.notif-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1040;
+}
+
+.notif {
+  position: relative;
+  display: inline-flex;
+}
+
+.notif-panel {
+  position: absolute;
+  top: calc(100% + 0.65rem);
+  right: 0;
+  z-index: 1050;
+  width: 22rem;
+  max-width: calc(100vw - 2rem);
+  display: flex;
+  flex-direction: column;
+  background: var(--brand-bg);
+  border: 1px solid color-mix(in srgb, var(--brand-ink) 12%, transparent);
+  border-radius: var(--brand-radius);
+  box-shadow: 0 18px 40px rgba(23, 19, 15, 0.22);
+  overflow: hidden;
+}
+
+.notif-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0.85rem;
+  background: var(--brand-sidebar);
+  color: var(--brand-sidebar-text);
+}
+
+.notif-head-icon {
+  font-size: 1.15rem;
+  color: var(--brand-accent);
+}
+
+.notif-head-title {
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+
+.notif-head-count {
+  margin-left: auto;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--brand-accent) 85%, #000);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.notif-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--brand-sidebar-text);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.notif-close:hover {
+  background-color: color-mix(in srgb, #fff 12%, transparent);
+  color: #fff;
+}
+
+.notif-close .material-symbols-outlined {
+  font-size: 1.15rem;
+}
+
+.notif-list {
+  max-height: 22rem;
+  overflow-y: auto;
+  padding: 0.35rem 0;
+}
+
+.notif-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--brand-ink) 8%, transparent);
+}
+
+.notif-item:last-child {
+  border-bottom: none;
+}
+
+.notif-item-icon {
+  flex: none;
+  margin-top: 0.1rem;
+  font-size: 1.15rem;
+  color: var(--brand-muted);
+}
+
+.notif-item.is-unread {
+  background: color-mix(in srgb, var(--brand-accent) 6%, #fff);
+}
+
+.notif-item.is-unread .notif-item-icon {
+  color: var(--brand-accent);
+}
+
+.notif-item-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.notif-item-msg {
+  margin: 0;
+  color: var(--brand-ink);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.notif-item.is-unread .notif-item-msg {
+  font-weight: 600;
+}
+
+.notif-item-time {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--brand-muted);
+  font-size: 0.72rem;
+}
+
+.notif-dot {
+  flex: none;
+  align-self: center;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--brand-accent);
+}
+
+.notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 2rem 1rem;
+  color: var(--brand-muted);
+}
+
+.notif-empty .material-symbols-outlined {
+  font-size: 2rem;
+  opacity: 0.6;
+}
+
+.notif-empty p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.notif-foot {
+  padding: 0.55rem 0.65rem;
+  border-top: 1px solid color-mix(in srgb, var(--brand-ink) 10%, transparent);
+  background: var(--brand-surface);
+}
+
+.notif-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--brand-accent) 45%, transparent);
+  border-radius: calc(var(--brand-radius) * 0.6);
+  background: transparent;
+  color: var(--brand-accent);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.notif-clear:hover {
+  background-color: var(--brand-accent);
+  color: #fff;
+}
+
+.notif-clear .material-symbols-outlined {
+  font-size: 1.05rem;
+}
+
 /* —— Public landing —— */
 .landing {
   min-height: 100vh;
   display: grid;
   grid-template-rows: auto 1fr auto;
-  color: var(--brand-surface);
+  color: #fff;
   background:
-    linear-gradient(160deg, rgba(12, 18, 24, 0.55), rgba(12, 18, 24, 0.82)),
-    radial-gradient(ellipse 80% 60% at 15% 20%, rgba(42, 111, 107, 0.45), transparent 55%),
-    radial-gradient(ellipse 70% 50% at 90% 80%, rgba(196, 92, 38, 0.28), transparent 50%),
-    linear-gradient(180deg, #1a2834 0%, #0c1218 100%);
+    linear-gradient(160deg, rgba(23, 19, 15, 0.55), rgba(23, 19, 15, 0.82)),
+    radial-gradient(ellipse 80% 60% at 15% 20%, rgba(226, 98, 15, 0.5), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 90% 80%, rgba(168, 61, 0, 0.4), transparent 50%),
+    linear-gradient(180deg, #2a211a 0%, #16130f 100%);
   position: relative;
   overflow: hidden;
 }
@@ -57,8 +790,8 @@ body {
       -18deg,
       transparent,
       transparent 48px,
-      rgba(247, 244, 239, 0.025) 48px,
-      rgba(247, 244, 239, 0.025) 49px
+      rgba(255, 255, 255, 0.03) 48px,
+      rgba(255, 255, 255, 0.03) 49px
     );
   pointer-events: none;
 }
@@ -178,9 +911,9 @@ body {
   right: -6%;
   top: 18%;
   background:
-    radial-gradient(circle at 35% 35%, rgba(247, 244, 239, 0.18), transparent 55%),
-    radial-gradient(circle at 70% 70%, rgba(42, 111, 107, 0.5), transparent 60%),
-    rgba(196, 92, 38, 0.15);
+    radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.2), transparent 55%),
+    radial-gradient(circle at 70% 70%, rgba(226, 98, 15, 0.55), transparent 60%),
+    rgba(168, 61, 0, 0.2);
   filter: blur(2px);
   animation: landing-drift 14s ease-in-out infinite alternate;
   pointer-events: none;

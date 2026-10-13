@@ -1,0 +1,73 @@
+{# Navbar notification panel — fetched by htmx.
+   Deliberately NOT a Bootstrap dropdown: the "Mark all as read" action swaps this
+   whole node via outerHTML, which would destroy an open Bootstrap dropdown. #}
+<div class="notif" id="notifBell">
+    {# Closed -> toggle opens it (?open=1); open -> plain bell closes it. #}
+    <button class="nav-bell-btn" type="button"
+            aria-label="Notifications"
+            aria-expanded="{{ 'true' if open else 'false' }}"
+            hx-get="{{ url_for('notifications_bell_view') ~ ('?open=1' if not open else '') }}"
+            hx-trigger="click"
+            hx-target="#notifBell" hx-swap="outerHTML">
+        <span class="material-symbols-outlined">notifications</span>
+        {% if unread %}
+        <span class="notif-badge">{{ unread }}</span>
+        {% endif %}
+    </button>
+
+    {% if open %}
+    {# Click-anywhere catcher: swaps the fragment back to its closed state. #}
+    <div class="notif-backdrop"
+         hx-get="{{ url_for('notifications_bell_view') }}"
+         hx-trigger="click"
+         hx-target="#notifBell" hx-swap="outerHTML"></div>
+    <div class="notif-panel" role="dialog" aria-label="Notifications">
+        <div class="notif-head">
+            <span class="material-symbols-outlined notif-head-icon">notifications</span>
+            <span class="notif-head-title">Notifications</span>
+            <span class="notif-head-count">{{ notifications|length }}</span>
+            <button class="notif-close" type="button" aria-label="Close"
+                    hx-get="{{ url_for('notifications_bell_view') }}"
+                    hx-trigger="click"
+                    hx-target="#notifBell" hx-swap="outerHTML">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="notif-list">
+            {% for n in notifications %}
+            <div class="notif-item {{ 'is-unread' if n.notification_id in unread_ids }}">
+                <span class="material-symbols-outlined notif-item-icon">
+                    {{ 'mail' if n.notification_id in unread_ids else 'mark_email_read' }}
+                </span>
+                <div class="notif-item-body">
+                    <p class="notif-item-msg">{{ n.message }}</p>
+                    <span class="notif-item-time">
+                        {{ n.created_at.strftime('%d %b %Y · %I:%M %p') }}
+                    </span>
+                </div>
+                {% if n.notification_id in unread_ids %}
+                <span class="notif-dot" title="Unread"></span>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="notif-empty">
+                <span class="material-symbols-outlined">notifications_off</span>
+                <p>No notifications yet.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if unread %}
+        <div class="notif-foot">
+            <button class="notif-clear" type="button"
+                    hx-post="{{ url_for('notifications_read_all_view') }}?keep_open=1"
+                    hx-target="#notifBell" hx-swap="outerHTML">
+                <span class="material-symbols-outlined">done_all</span>
+                Mark all as read
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>

@@ -14,8 +14,11 @@ class AdminCreate(UserBase):
 class RegularUserCreate(UserBase):
     role:str = "regular_user"
 
+class HostCreate(UserBase):
+    role:str = "host"
+
 class UserResponse(SQLModel):
-    id: int
+    user_id: int
     username:str
     email: EmailStr
 

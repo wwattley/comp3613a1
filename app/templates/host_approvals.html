@@ -1,0 +1,69 @@
+{% extends "authenticated-base.html" %}
+{% block title %}Pending Approvals · UniHomes{% endblock %}
+
+{% block subpage_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h4 mb-0">Hello,<br>{{ user.username }}</h1>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <h2 class="h5 mb-3">Pending Reservation Approvals</h2>
+
+        {% for reservation, listing, student in approvals %}
+        <div class="card approval-card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <strong>Listing #: {{ listing.listing_id }} — {{ listing.title }}</strong>
+                    <span class="badge text-bg-warning">Status: Pending</span>
+                </div>
+                <div class="mb-1">Name: {{ student.username }}</div>
+                <div class="mb-1">Uni: {{ student.university or "Not provided" }}</div>
+                <div class="mb-1">Phone: {{ student.phone or "Not provided" }}</div>
+                <div class="mb-3">
+                    <a href="{{ url_for('reservation_proof_view', reservation_id=reservation.reservation_id) }}"
+                       target="_blank" rel="noopener" hx-boost="false">
+                        <span class="material-symbols-outlined align-middle me-1">description</span>
+                        Link to Proof of enrollment
+                    </a>
+                </div>
+                <div class="d-flex gap-2">
+                    <form method="post" action="{{ url_for('reservation_approve_view', reservation_id=reservation.reservation_id) }}"
+                          class="d-inline">
+                        <button class="btn btn-primary btn-sm" type="submit">approve</button>
+                    </form>
+                    <form method="post" action="{{ url_for('reservation_reject_view', reservation_id=reservation.reservation_id) }}"
+                          class="d-inline">
+                        <button class="btn btn-outline-danger btn-sm" type="submit">reject</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-light border" role="alert">
+            No pending reservations — you're all caught up.
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="col-lg-5">
+        <h2 class="h5 mb-3">Notifications</h2>
+        <div class="card">
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for n in notifications %}
+                    <li class="list-group-item d-flex justify-content-between gap-2">
+                        <span class="{{ 'fw-semibold' if not n.is_read }}">{{ n.message }}</span>
+                        <small class="text-muted text-nowrap">{{ n.created_at.strftime('%d %b %Y') }}</small>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted">No notifications yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

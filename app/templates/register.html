@@ -5,10 +5,10 @@
 <div class="auth-shell">
   <div class="auth-panel">
     <a class="auth-back" href="{{ url_for('index_view') }}">← Home</a>
-    <div class="brand-wordmark">FastStarter</div>
-    <p class="auth-tagline">Create an account</p>
+    <div class="brand-wordmark">UniHomes</div>
+    <p class="auth-tagline">Join UniHomes — find your next home near campus</p>
 
-    <form method="POST" action="{{ url_for('register_view') }}">
+    <form method="POST" action="{{ url_for('register_view') }}" enctype="multipart/form-data">
       <div class="mb-3">
         <label class="form-label" for="username">Username</label>
         <input class="form-control" type="text" id="username" name="username" required autofocus>
@@ -18,9 +18,49 @@
         <input class="form-control" type="email" id="email" name="email" required>
       </div>
       <div class="mb-3">
+        <label class="form-label" for="phone">Phone <span class="text-muted">(optional)</span></label>
+        <input class="form-control" type="tel" id="phone" name="phone"
+               placeholder="e.g. +1 868 555 0123">
+      </div>
+      <div class="mb-3">
         <label class="form-label" for="password">Password</label>
         <input class="form-control" type="password" id="password" name="password" required>
       </div>
+      <div class="mb-3">
+        <label class="form-label" for="university">University <span class="text-muted">(optional)</span></label>
+        <input class="form-control" type="text" id="university" name="university"
+               placeholder="e.g. The University of the West Indies">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">I am a…</label>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="role" id="role-student"
+                 value="regular_user" checked onchange="toggleHostFields(false)">
+          <label class="form-check-label" for="role-student">Student looking for a place</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="role" id="role-host"
+                 value="host" onchange="toggleHostFields(true)">
+          <label class="form-check-label" for="role-host">Host listing my property</label>
+        </div>
+      </div>
+
+      {# Workflow 3: host applicants attach a face photo + credentials (workflow3.png card). #}
+      <div id="host-fields" class="d-none border-start border-3 border-primary ps-3 mb-3">
+        <p class="small text-muted mb-2">
+          Host applications are reviewed by an admin before you can sign in.
+        </p>
+        <div class="mb-3">
+          <label class="form-label" for="face">Face photo <span class="text-muted">(PNG or JPEG, max 10 MB)</span></label>
+          <input class="form-control" type="file" id="face" name="face" accept="image/png,image/jpeg">
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="credentials">Credentials <span class="text-muted">(PDF, max 10 MB)</span></label>
+          <input class="form-control" type="file" id="credentials" name="credentials" accept="application/pdf">
+        </div>
+      </div>
+
       <div class="d-grid gap-2 mb-3">
         <button class="btn btn-primary btn-lg" type="submit">Register</button>
         <a class="btn btn-outline-secondary" href="{{ url_for('login_view') }}">Back to sign in</a>
@@ -32,4 +72,12 @@
     </form>
   </div>
 </div>
+
+<script>
+  function toggleHostFields(show) {
+    document.getElementById("host-fields").classList.toggle("d-none", !show);
+    document.getElementById("face").required = show;
+    document.getElementById("credentials").required = show;
+  }
+</script>
 {% endblock %}
